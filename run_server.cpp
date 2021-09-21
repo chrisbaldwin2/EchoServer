@@ -9,7 +9,7 @@
 #include<unistd.h>
 #include<arpa/inet.h>
 #include"mp1.h"
-#include<pthread.h>
+#include<signal.h>
 
 void error(const char *err)
 {
@@ -21,15 +21,15 @@ int bind_socket(struct sockaddr_in *address)
 {
     int sfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sfd < 0) error("Error getting socket");
-    printf("socket descriptor: %d\n", sfd);
+    // printf("socket descriptor: %d\n", sfd);
     int err = bind(sfd ,(struct sockaddr *)address,sizeof(struct sockaddr));
     if (sfd < 0) error("Error getting socket");
-    printf("bind: %d\n", err);
+    // printf("bind: %d\n", err);
     err = listen(sfd, MP1::list_queue_size);
     if(err < 0) error("Error on listen");
     // Handle socket with interupts
-    while(err == EINTR) err = listen(sfd, MP1::list_queue_size);
-    printf("listen: %d\n", err);
+    // while(err == EINTR) err = listen(sfd, MP1::list_queue_size);
+    // printf("listen: %d\n", err);
     return sfd;
 }
 
@@ -42,26 +42,35 @@ int listen_on_socket(struct sockaddr_in *cli_addr, int sfd, int port)
     {
         int newsockfd = accept(sfd, (struct sockaddr *) cli_addr, &clilen);
         if (newsockfd < 0) error("Accept");
-        ssize_t size = 1;
+        printf("Opening client %d\n", cli_addr->sin_port);
         int pid = fork();
         if(pid < 0) error("Error listening on socket");
         if(pid == 0){
-            while(size)
+            // Child Process
+            char ip_str[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &(cli_addr->sin_addr), ip_str, INET_ADDRSTRLEN);
+            while(1)
             {
                 bzero(buf, MP1::buf_size);
-                ssize_t size = recv(newsockfd, buf, MP1::buf_size, 0);
+                ssize_t size;
+                read_l:
+                  size = recv(newsockfd, buf, MP1::buf_size, 0);
+                  if(size < 0 && errno == EINTR) goto read_l;
                 if(size < 0) error("Receive");
-                char str[INET_ADDRSTRLEN];
-                inet_ntop(AF_INET, &(cli_addr->sin_addr), str, INET_ADDRSTRLEN);
-                printf("Received @ %s::%d size %d: %s", str, cli_addr->sin_port, (int) size, buf);
+                if(size == 0) break;
+                printf("Received @ %s::%d size %d: %s", ip_str, cli_addr->sin_port, (int) size, buf);
                 printf("Echoing: %s", buf);
-                int err = send(newsockfd, buf, MP1::buf_size, 0);
-                if(err < 0) error("Send"); 
+                write_l:
+                  size = send(newsockfd, buf, MP1::buf_size, 0);
+                  if(size < 0 && errno == EINTR) goto write_l;
+                if(size < 0) error("Send"); 
             }
-            printf("Closing client %d", cli_addr->sin_port);
+            printf("Closing client %d\n", cli_addr->sin_port);
             close(newsockfd);
             exit(0);
         }
+        // Parent Process
+        signal(SIGCHLD,SIG_IGN);
         close(newsockfd);
     }
     return 0;
