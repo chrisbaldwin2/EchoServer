@@ -82,16 +82,16 @@ int bind_socket(struct sockaddr_in *address)
 void listen_on_socket(int sfd, int port)
 {
     printf("Listening on sock %d port %d\n", sfd, port);
-    sockaddr_in *cli_addr;
-    bzero((char *) cli_addr, sizeof(sockaddr));
+    sockaddr_in cli_addr;
+    bzero((char *) &cli_addr, sizeof(sockaddr_in));
     socklen_t clilen = sizeof(sockaddr);
     int newsockfd, pid;
     signal(SIGCHLD, SIG_IGN);
     while(1)
     {
-        newsockfd = accept(sfd, (struct sockaddr *) cli_addr, &clilen);
+        newsockfd = accept(sfd, (struct sockaddr *) &cli_addr, &clilen);
         if(newsockfd < 0) error("Error accepting connection\n");
-        printf("Opening client %d\n", cli_addr->sin_port);
+        printf("Opening client %d\n", cli_addr.sin_port);
         pid = fork();
         if(pid < 0) error("Error forking proccess\n");
         if(pid == 0){
@@ -99,7 +99,7 @@ void listen_on_socket(int sfd, int port)
             char buf[MP1::buf_size];
             char ip_str[INET_ADDRSTRLEN];
             ssize_t size;
-            inet_ntop(AF_INET, &(cli_addr->sin_addr), ip_str, INET_ADDRSTRLEN);
+            inet_ntop(AF_INET, &(cli_addr.sin_addr), ip_str, INET_ADDRSTRLEN);
             while(1)
             {
                 // Zero the buffer to prevent reading stale values
@@ -109,7 +109,7 @@ void listen_on_socket(int sfd, int port)
                   if(size < 0 && errno == EINTR) goto read_l;
                 if(size < 0) error("Error receiving packet\n");
                 if(size == 0) break;
-                printf("Received @ %s::%d size %d: %s", ip_str, cli_addr->sin_port, (int) size, buf);
+                printf("Received @ %s::%d size %d: %s", ip_str, cli_addr.sin_port, (int) size, buf);
                 printf("Echoing: %s", buf);
                 write_l:
                   size = send(newsockfd, buf, MP1::buf_size, 0);
@@ -117,7 +117,7 @@ void listen_on_socket(int sfd, int port)
                 if(size < 0) error("Error sending echo packet\n"); 
             }
             // After receiving EOF, Close the client and end the child process
-            printf("Closing client %d\n", cli_addr->sin_port);
+            printf("Closing client %d\n", cli_addr.sin_port);
             close(newsockfd);
             exit(0);
         }

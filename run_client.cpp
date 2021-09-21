@@ -162,10 +162,7 @@ int main(int argc, char *argv[])
         writen(sock_fd, buf);
         listen_for_resp(sock_fd, buf);
     }
-    // Send a buffer with all zero (EOF) to the server to signal the end of transmission
-    bzero(buf,MP1::buf_size);
-    writen(sock_fd, buf);
-    printf("\n");
+    // Close the socket ( sending EOF in the proccess )
     close(sock_fd);
     return 0;
 }
