@@ -38,6 +38,7 @@ int listen_on_socket(struct sockaddr_in *cli_addr, int sfd, int port)
     printf("Listening on sock %d port %d\n", sfd, port);
     socklen_t clilen = sizeof(sockaddr);
     char buf[MP1::buf_size];
+    signal(SIGCHLD, SIG_IGN);
     while(1)
     {
         int newsockfd = accept(sfd, (struct sockaddr *) cli_addr, &clilen);
@@ -70,7 +71,6 @@ int listen_on_socket(struct sockaddr_in *cli_addr, int sfd, int port)
             exit(0);
         }
         // Parent Process
-        signal(SIGCHLD,SIG_IGN);
         close(newsockfd);
     }
     return 0;
