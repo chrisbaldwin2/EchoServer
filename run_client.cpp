@@ -19,6 +19,9 @@
  * 9/21/2021  :: Chris Baldwin :: Added function header 
  *            ::               :: comments and history table
  * -----------++---------------++-----------------------------
+ * 9/21/2021  :: Chris Baldwin :: Added better newline handling 
+ *            ::               :: and buffer underflow in r/w
+ * -----------++---------------++-----------------------------
  */
 
 #include<stdio.h>
@@ -102,7 +105,7 @@ void readline(char *buf)
     printf("Enter the String: ");
     // Read from stdin at most the size of the buffer
     fgets(buf, MP1::buf_size, stdin);
-    if(buf[0] == 0) error("Invalid input\n");
+    // if(buf[0] == 0) error("Invalid input\n");
 }
 
 /* writen
@@ -113,15 +116,28 @@ void readline(char *buf)
  * @param buf The buffer to be written to the server
  * @return none
  */
-void writen(int sfd, char *buf)
+void writen(int sfd, char *buf, int index)
 {
     ssize_t size;
     printf("Sending message to server: %s", buf);
+    if(!strstr(buf, "\n")) printf("\n");
     // Attempt to send the packet to the server & retry on EINTR
     write_l:
-      size = send(sfd, buf, MP1::buf_size, 0);
+      size = write(sfd, buf + index, MP1::buf_size - index);
       if(size < 0 && errno == EINTR) goto write_l;
     if(size < 0) error("Error writing to socket\n");
+    if(size + index < MP1::buf_size) writen(sfd, buf, index + size);
+}
+
+int readn(int sfd, char *buf, int index)
+{
+    int size;
+    read_l:
+      size = read(sfd, buf + index, MP1::buf_size - index);
+      if(size < 0 && errno == EINTR) goto read_l;
+    if(size < 0) error("Error reading from socket\n");
+    if(size + index < MP1::buf_size) readn(sfd, buf, index + size);
+    return size;
 }
 
 /* listen_for_resp
@@ -138,11 +154,9 @@ void listen_for_resp(int sfd, char *buf)
     ssize_t size;
     bzero(buf,MP1::buf_size);
     // Attempt to receive the packet from the server & retry on EINTR
-    read_l:
-      size = recv(sfd, buf, MP1::buf_size, 0);
-      if(size < 0 && errno == EINTR) goto read_l;
-    if(size < 0) error("Error reading from socket\n");
+    size = readn(sfd, buf, 0);
     printf("Got %d chars: %s", (int) size, buf);
+    if(!strstr(buf, "\n")) printf("\n");
 }
 
 int main(int argc, char *argv[])
@@ -155,11 +169,9 @@ int main(int argc, char *argv[])
     while(1)
     {
         readline(buf);
-        // printf("comp:%d\n", memcmp(buf, "exit\n", sizeof("exit")));
-
-        // If EOF (Sentinal) is typed, break out of the loop and close the connection
+        // If EOF (Sentinal Value) is typed, break out of the loop and close the connection
         if(!memcmp(buf, "EOF\n", sizeof("EOF\n"))) break;
-        writen(sock_fd, buf);
+        writen(sock_fd, buf, 0);
         listen_for_resp(sock_fd, buf);
     }
     // Close the socket ( sending EOF in the proccess )

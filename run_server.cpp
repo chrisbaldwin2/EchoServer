@@ -19,6 +19,9 @@
  * 9/21/2021  :: Chris Baldwin :: Added function header 
  *            ::               :: comments and history table
  * -----------++---------------++-----------------------------
+ * 9/21/2021  :: Chris Baldwin :: Added better newline handling 
+ *            ::               :: and buffer underflow in r/w
+ * -----------++---------------++-----------------------------
  */
 
 #include<stdio.h>
@@ -70,6 +73,51 @@ int bind_socket(struct sockaddr_in *address)
     return sfd;
 }
 
+/* read_socket
+ *
+ * Reads from the socket file descriptor to th buffer. If 
+ * the write returns less than the size of the buffer, this 
+ * wrapper will attempt to write the rest of the buffer.
+ * 
+ * @param sfd The open socket file descriptor
+ * @param buf The buffer to be written to the socket
+ * @param index The index of the buffer to start writting
+ * @return size The size of the buffer written to the sfd 
+ */
+int read_socket(int sfd, char *buf, int index)
+{
+    int size;
+    read_l:
+      size = read(sfd, buf + index, MP1::buf_size - index);
+      if(size < 0 && errno == EINTR) goto read_l;
+    if(size < 0) error("Error receiving packet\n");
+    if(size == 0) return 0;
+    if(size + index < MP1::buf_size) read_socket(sfd, buf, size + index);
+    return size + index;
+}
+
+/* write_socket
+ *
+ * Writes the buffer to the socket file descriptor. If the write
+ * returns less than the size of the buffer, this wrapper will 
+ * attempt to write the rest of the buffer.
+ * 
+ * @param sfd The open socket file descriptor
+ * @param buf The buffer to be written to the socket
+ * @param index The index of the buffer to start writting
+ * @return size The size of the buffer written to the sfd 
+ */
+int write_socket(int sfd, char *buf, int index)
+{
+    int size;
+    write_l:
+      size = write(sfd, buf + index, MP1::buf_size - index);
+      if(size < 0 && errno == EINTR) goto write_l;
+    if(size < 0) error("Error sending echo packet\n");
+    if(size + index < MP1::buf_size) write_socket(sfd, buf, index + size);
+    return size + index;
+}
+
 /* listen_on_socket
  *
  * Listens for a new connenction, accepts it, forks, and echos any packets which are sent.
@@ -99,24 +147,21 @@ void listen_on_socket(int sfd, int port)
             char buf[MP1::buf_size];
             char ip_str[INET_ADDRSTRLEN];
             ssize_t size;
+            // Stores the string of the client ip address into ip_str
             inet_ntop(AF_INET, &(cli_addr.sin_addr), ip_str, INET_ADDRSTRLEN);
             while(1)
             {
                 // Zero the buffer to prevent reading stale values
                 bzero(buf, MP1::buf_size);
-                read_l:
-                  size = recv(newsockfd, buf, MP1::buf_size, 0);
-                  if(size < 0 && errno == EINTR) goto read_l;
-                if(size < 0) error("Error receiving packet\n");
+                size = read_socket(newsockfd, buf, 0);
                 if(size == 0) break;
                 printf("Received @ %s::%d size %d: %s", ip_str, cli_addr.sin_port, (int) size, buf);
+                if(!strstr(buf, "\n")) printf("\n");
                 printf("Echoing: %s", buf);
-                write_l:
-                  size = send(newsockfd, buf, MP1::buf_size, 0);
-                  if(size < 0 && errno == EINTR) goto write_l;
-                if(size < 0) error("Error sending echo packet\n"); 
+                if(!strstr(buf, "\n")) printf("\n");
+                size = write_socket(newsockfd, buf, 0); 
             }
-            // After receiving EOF, Close the client and end the child process
+            // After receiving EOF, Close the socket and end the child process
             printf("Closing client %d\n", cli_addr.sin_port);
             close(newsockfd);
             exit(0);
