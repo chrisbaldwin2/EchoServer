@@ -24,6 +24,10 @@
  * -----------++---------------++-----------------------------
  * 9/21/2021  :: Chris Baldwin :: Added EOF handling
  * -----------++---------------++-----------------------------
+ * 9/22/2021  :: Chris Baldwin :: Added printing of server IP
+ * -----------++---------------++-----------------------------
+ * 9/22/2021  :: Chris Baldwin :: Cleaned up printf statements
+ * -----------++---------------++-----------------------------
  */
 
 #include<stdio.h>
@@ -131,7 +135,7 @@ int write_socket(int sfd, char *buf, int index)
  */
 void listen_on_socket(int sfd, int port)
 {
-    printf("Listening on sock %d port %d\n", sfd, port);
+    printf("Socket: %d Port: %d\n", sfd, port);
     sockaddr_in cli_addr;
     bzero((char *) &cli_addr, sizeof(sockaddr_in));
     socklen_t clilen = sizeof(sockaddr);
@@ -141,7 +145,7 @@ void listen_on_socket(int sfd, int port)
     {
         newsockfd = accept(sfd, (struct sockaddr *) &cli_addr, &clilen);
         if(newsockfd < 0) error("Error accepting connection\n");
-        printf("Opening client %d\n", cli_addr.sin_port);
+        printf("Opening client on Port: %d\n", cli_addr.sin_port);
         pid = fork();
         if(pid < 0) error("Error forking proccess\n");
         if(pid == 0){
@@ -157,14 +161,14 @@ void listen_on_socket(int sfd, int port)
                 bzero(buf, MP1::buf_size);
                 size = read_socket(newsockfd, buf, 0);
                 if(size == 0) break;
-                printf("Received @ %s::%d size %d: %s", ip_str, cli_addr.sin_port, (int) size, buf);
+                printf("Received @%s::%d Size: %d Msg: %s", ip_str, cli_addr.sin_port, (int) size, buf);
                 if(!strstr(buf, "\n")) printf("\n");
-                printf("Echoing: %s", buf);
+                printf("Echoing Size: %d Msg: %s", (int) size, buf);
                 if(!strstr(buf, "\n")) printf("\n");
                 size = write_socket(newsockfd, buf, 0); 
             }
             // After receiving EOF, Close the socket and end the child process
-            printf("Closing client %d\n", cli_addr.sin_port);
+            printf("Closing client on Port: %d\n", cli_addr.sin_port);
             close(newsockfd);
             exit(MP1::GOOD);
         }
@@ -181,6 +185,8 @@ int main(int argc, char *argv[])
     if(argc != 2) error("Call must have 1 argument: PORT_NUM\n");
     port = strtol(argv[1], port_str, 10);
     if(port <= 1024) error("Error port cannot be less than 1024\n");
+    // Print out the ip of the server
+    system("hostname -I");
     // Assign socket struct variables
     sockaddr_in serv_addr;
     serv_addr.sin_family = AF_INET;

@@ -24,6 +24,8 @@
  * -----------++---------------++-----------------------------
  * 9/21/2021  :: Chris Baldwin :: Added EOF handling
  * -----------++---------------++-----------------------------
+ * 9/22/2021  :: Chris Baldwin :: Cleaned up printf statements
+ * -----------++---------------++-----------------------------
  */
 
 #include<stdio.h>
@@ -88,7 +90,7 @@ void connect_to_server(int sfd, char *argv[])
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = inet_addr(argv[1]);
     port = strtol(argv[2], str, 10);
-    printf("port %d\n", port);
+    printf("Connecting to %s::%d\n", argv[1], port);
     serv_addr.sin_port = htons((uint16_t) port);
     // Try to connect to the ip and port number specified
     err = connect(sfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr));
@@ -108,7 +110,7 @@ int readline(char *buf)
     // Read from stdin at most the size of the buffer
     if(!fgets(buf, MP1::buf_size, stdin)) 
     {
-        printf("EOF\n");
+        printf("<EOF>\n");
         return MP1::ERROR;
     }
     if(!strstr(buf, "\n")) printf("\n");
@@ -126,7 +128,7 @@ int readline(char *buf)
 void writen(int sfd, char *buf, int index)
 {
     ssize_t size;
-    printf("Sending message to server: %s", buf);
+    printf("Sending message: %s", buf);
     if(!strstr(buf, "\n")) printf("\n");
     // Attempt to send the packet to the server & retry on EINTR
     write_l:
