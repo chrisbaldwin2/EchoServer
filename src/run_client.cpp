@@ -46,7 +46,7 @@
 void error(const char *err)
 {
     printf("%s", err);
-    exit(-1);
+    exit(MP1::ERROR);
 }
 
 /* bind_socket
@@ -100,12 +100,17 @@ void connect_to_server(int sfd, char *argv[])
  * @param[out] buf The buffer to write to 
  * @return none
  */
-void readline(char *buf)
+int readline(char *buf)
 {
     printf("Enter the String: ");
     // Read from stdin at most the size of the buffer
-    fgets(buf, MP1::buf_size, stdin);
-    // if(buf[0] == 0) error("Invalid input\n");
+    if(!fgets(buf, MP1::buf_size, stdin)) 
+    {
+        printf("EOF\n");
+        return MP1::ERROR;
+    }
+    if(!strstr(buf, "\n")) printf("\n");
+    return MP1::GOOD;
 }
 
 /* writen
@@ -168,13 +173,12 @@ int main(int argc, char *argv[])
     connect_to_server(sock_fd, argv);
     while(1)
     {
-        readline(buf);
-        // If EOF (Sentinal Value) is typed, break out of the loop and close the connection
-        if(!memcmp(buf, "EOF\n", sizeof("EOF\n"))) break;
+        if(readline(buf) == MP1::ERROR) break;
         writen(sock_fd, buf, 0);
         listen_for_resp(sock_fd, buf);
     }
     // Close the socket ( sending EOF in the proccess )
+    printf("~~Terminating Session~~\n");
     close(sock_fd);
-    return 0;
+    return MP1::GOOD;
 }

@@ -47,7 +47,7 @@
 void error(const char *err)
 {
     printf("%s", err);
-    exit(-1);
+    exit(MP1::ERROR);
 }
 
 /* bind_socket
@@ -164,7 +164,7 @@ void listen_on_socket(int sfd, int port)
             // After receiving EOF, Close the socket and end the child process
             printf("Closing client %d\n", cli_addr.sin_port);
             close(newsockfd);
-            exit(0);
+            exit(MP1::GOOD);
         }
         // Parent Process
         close(newsockfd);
@@ -188,5 +188,5 @@ int main(int argc, char *argv[])
     sfd = bind_socket(&serv_addr);
     // Listen to socket ( infinite loop )
     listen_on_socket(sfd, port);
-    return 0;
+    return MP1::GOOD;
 }

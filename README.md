@@ -15,4 +15,4 @@ __To Install__
 
 __Running The Server__
 * The buffer size is 80 Bytes
-* The client can type 'EOF' or Cntrl-C to end their session
+* The client can type Cntrl-D or Cntrl-C to end their session
