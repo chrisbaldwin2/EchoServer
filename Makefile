@@ -1,20 +1,18 @@
+#
+SERVERFILE=run_server 
+CLIENTFILE=run_client
+INSTALLDIR=build
+OUTPUTFILE=$(SERVERFILE) $(CLIENTFILE)
+# look for .cpp & .h files in ./src
+vpath %.cpp ./src
+vpath %.h ./src
 
 .PHONY: all
-all: run_server run_client
+all: $(OUTPUTFILE)
 
-run_server: run_server.cpp
-	g++ -o run_server run_server.cpp 
-	
-run_client: run_client.cpp
-	g++ -o run_client run_client.cpp
-
-.PHONY: install
-install:
-	mkdir -p binaries
-	cp -p run_client binaries
-	cp -p run_server binaries
+%: %.cpp
+	g++ -o $(INSTALLDIR)/$@ $<
 
 .PHONY: clean
 clean:
-	rm -f run_server
-	rm -f run_client
+	rm -f $(INSTALLDIR)/$(SERVERFILE) $(INSTALLDIR)/$(CLIENTFILE)
