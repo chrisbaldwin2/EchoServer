@@ -22,6 +22,8 @@
  * 9/21/2021  :: Chris Baldwin :: Added better newline handling 
  *            ::               :: and buffer underflow in r/w
  * -----------++---------------++-----------------------------
+ * 9/21/2021  :: Chris Baldwin :: Added EOF handling
+ * -----------++---------------++-----------------------------
  */
 
 #include<stdio.h>

@@ -1,5 +1,4 @@
-#
-SERVERFILE=run_server 
+SERVERFILE=run_server
 CLIENTFILE=run_client
 INSTALLDIR=build
 OUTPUTFILE=$(SERVERFILE) $(CLIENTFILE)
@@ -8,15 +7,20 @@ vpath %.cpp ./src
 vpath %.h ./src
 
 .PHONY: all
-all: build $(OUTPUTFILE)
+all: $(OUTPUTFILE)
 
-.PHONY: build
-build:
-	mkdir -p $(INSTALLDIR)
 
 %: %.cpp
-	g++ -o $(INSTALLDIR)/$@ $<
+	g++ -o $@ $<
+
+
+.PHONY: install
+install:
+	mkdir -p $(INSTALLDIR)
+	cp -p $(SERVERFILE) $(INSTALLDIR)
+	cp -p $(CLIENTFILE) $(INSTALLDIR)
 
 .PHONY: clean
 clean:
 	rm -f $(INSTALLDIR)/$(SERVERFILE) $(INSTALLDIR)/$(CLIENTFILE)
+	rm -f $(OUTPUTFILE)
