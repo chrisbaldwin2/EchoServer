@@ -8,7 +8,11 @@ vpath %.cpp ./src
 vpath %.h ./src
 
 .PHONY: all
-all: $(OUTPUTFILE)
+all: build $(OUTPUTFILE)
+
+.PHONY: build
+build:
+	mkdir -p $(INSTALLDIR)
 
 %: %.cpp
 	g++ -o $(INSTALLDIR)/$@ $<
