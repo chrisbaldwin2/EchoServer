@@ -3,6 +3,17 @@
 - Chris Baldwin
 - Kaushal Prudhvi
 
+## Roles
+Chris Baldwin
+* Source Code
+* Makefile
+* README
+
+Kaushal Prudhvi
+* Code Review
+* Testcases
+* Report
+
 __To Install__
 1. Clone the repo
 2. Open a terminal (server) in the repository folder
