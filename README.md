@@ -10,7 +10,9 @@ Chris Baldwin
 * README
 
 Kaushal Prudhvi
+* (Made a personal version of the code)
 * Code Review
+* Solved Error Handling
 * Testcases
 * Report
 
@@ -18,7 +20,6 @@ __To Install__
 1. Clone the repo
 2. Open a terminal (server) in the repository folder
 3. run `make` to make the project
-4. run `hostname -I` to get your local ip address
 5. run `./run_server <PORT_NUM>`
 6. Open a terminal (client) in the repository folder
 7. run `./run_client <IP_ADDR> <PORT_NUM>` (Note that 
@@ -27,3 +28,4 @@ __To Install__
 __Running The Server__
 * The buffer size is 80 Bytes
 * The client can type Cntrl-D or Cntrl-C to end their session
+* Messages longer than 
