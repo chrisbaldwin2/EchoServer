@@ -1,6 +1,8 @@
 SERVERFILE=run_server
 CLIENTFILE=run_client
 INSTALLDIR=build
+SRCDIR=src
+DEPS=$(SRCDIR)/mp1.h
 OUTPUTFILE=$(SERVERFILE) $(CLIENTFILE)
 # look for .cpp & .h files in ./src
 vpath %.cpp ./src
@@ -10,7 +12,7 @@ vpath %.h ./src
 all: $(OUTPUTFILE)
 
 
-%: %.cpp
+%: %.cpp $(DEPS)
 	g++ -o $@ $<
 
 
